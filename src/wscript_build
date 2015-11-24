@@ -1,0 +1,18 @@
+from waflib.Tools import waf_unit_test
+
+bld.stlib(
+      source   = bld.path.ant_glob('agg-2.5/src/agg_*.cpp') 
+               + bld.path.ant_glob('agg-2.5/src/ctrl/*.cpp'),
+      target   = 'agg',
+      includes = '. .. agg-2.5/include'
+      )
+bld.program(
+      source   = ['agg_app.cc', 'agg_button_ctrl.cpp']
+                  + bld.env.PLATFORM_SRC,
+      includes = '. .. agg-2.5/include',
+      cxxflags = ['-O0', '-ggdb'],
+      lib      = ['SDL2_image', 'SDL2_mixer'],
+      target   = 'my_slide',
+      use      = ['agg'],
+      uselib   = ['platform'],
+      )
