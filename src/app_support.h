@@ -60,8 +60,8 @@
 #define START_W  760
 #define WINDOW_FLAGS agg::window_fullscreen | agg::window_keep_aspect_ratio
 #else
-#define START_H  1024
-#define START_W  760
+#define START_H  800
+#define START_W  550
 #define WINDOW_FLAGS agg::window_resize | agg::window_hw_buffer
 #endif
 

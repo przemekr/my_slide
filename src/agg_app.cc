@@ -1,22 +1,22 @@
 /*
- * AGG-Timer, a simple timer clock application.
+ * MySlide, a simple slide show application.
  * Copyright 2014 Przemyslaw Rzepecki
  * Contact: przemekr@sdfeu.org
  * 
- * This file is part of AGG-Timer.
+ * This file is part of MySlide.
  * 
- * AGG-Timer is free software: you can redistribute it and/or modify it
+ * MySlide is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation, either version 3 of the License, or (at your option)
  * any later version.
  * 
- * AGG-Timer is distributed in the hope that it will be useful, but WITHOUT
+ * MySlide is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  * 
  * You should have received a copy of the GNU General Public License along with
- * AGG-Timer.  If not, see <http://www.gnu.org/licenses/>.
+ * MySlide.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <math.h>
@@ -63,7 +63,7 @@ private:
 int agg_main(int argc, char* argv[])
 {
     the_application app(agg::pix_format_bgra32, flip_y);
-    app.caption("AGG Timer");
+    app.caption("MySlide");
 
     DIR* dir = opendir(".");
     struct dirent *dirEntry;

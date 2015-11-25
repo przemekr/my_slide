@@ -4,6 +4,7 @@ public:
    PhotoView(App& app): AppView(app)
    {
       resized = true;
+      nextIdx = 0;
    }
 
    void on_mouse_button_up(int x, int y, unsigned flags)
@@ -81,7 +82,7 @@ public:
 
       if (time > 2000)
       {
-         dim += 2;
+         dim = (time-2000)/3000*128;
          pixfmt_type pf2(app.rbuf_img(nextIdx));
          rbase.blend_from(pf2, 
                &rec,
@@ -134,7 +135,7 @@ private:
       time += elapsed_time;
       if (time > 5000)
       {
-         app.changeView("PhotoView");
+         app.changeView(std::rand()%3?"PhotoView":"TextView");
       }
    }
    bool resized;
@@ -144,5 +145,5 @@ private:
    double moveY;
    double scale;
    double time;
-   int dim;
+   double dim;
 };

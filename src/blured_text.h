@@ -3,7 +3,7 @@
 class TextView : public AppView
 {
 public:
-   TextView(App& app): AppView(app)
+   TextView(App& app): AppView(app), duration(3000)
    {
       resized = true;
    }
@@ -52,24 +52,38 @@ public:
       agg::rasterizer_scanline_aa<> ras;
       agg::scanline_u8 sl;
       ras.reset();
+      rbase.clear(black);
+
+      const std::string texts[] =
+      {
+         "Hi...",
+         "would be\n\n so nice",
+         "to write\n\n a good SW",
+         "without bugs...",
+         "just\n\n the clean code"
+      };
+      const std::string text = texts[idx];
+      double alpha = std::max(0.0, 0.8-(time/3000));
 
       agg::rendering_buffer m_rbuf2;
       agg::pixfmt_bgra32 pixf2(m_rbuf2);
       int w = app.width();
       int h = app.height();
 
-      double y = 210;
-      double x = 50;
+      double y = 210+0.3*blur/3.0;
+      double x = 50 +0.3*blur/3.0;
+      double size = 1.0*w/15+time/duration*20;
       
-      agg::rgba blue(0.0, 0, 0.9, 0.8-0.8*(time/4000));
-      app.draw_text(x+0.3*blur/3.0, y+blur/3.0, w/15, blue, 1.0,
-            "Happy Birthday");
+      agg::rgba blue(0.0, 0, 0.9, alpha);
+      app.draw_text(x, y, size, blue, 1.0, text.c_str());
 
       pixf2.attach(pf, 0, y-50, w, y+350);
       agg::stack_blur_rgba32(pixf2,
             blur, 
             blur);
       blur += 0.3;
+      if (time > 2000)
+         blur += 1;
    }
 
    void enter()
@@ -77,26 +91,28 @@ public:
       wait_mode(false);
       time = 0;
       blur = 0;
+      idx = std::rand()%5;
    }
 
    void on_resize(int, int)
    {
       resized = true;
    }
-   int max_fps() { return 7; }
+   int max_fps() { return 20; }
 
 private:
    agg::stack_blur  <agg::rgba8, agg::stack_blur_calc_rgb<> >     m_stack_blur;
    void update(long elapsed_time)
    {
       time += elapsed_time;
-      if (time > 4000)
+      if (time > duration)
       {
-         app.changeView("PhotoView");
+         app.changeView(std::rand()%3?"PhotoView":"TextView");
       }
    }
    bool resized;
-   int photoIdx;
+   int idx;
+   int duration;
    double moveX;
    double moveY;
    double scale;
