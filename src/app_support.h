@@ -161,6 +161,42 @@ public:
       agg::render_scanlines(m_ras, m_sl, ren);
    }
 
+   bool scale_img(unsigned idx,
+         unsigned xsize, unsigned ysize,
+         unsigned xoff = 0,  unsigned yoff = 0)
+   {
+      agg::rendering_buffer rbuf;
+      agg::scanline_u8 sl;
+      agg::rasterizer_scanline_aa<> ras;
+
+      agg::trans_affine shape_mtx;
+      shape_mtx.reset();
+      shape_mtx *= agg::trans_affine_scaling(
+            rbuf_img(idx).width()/xsize,
+            rbuf_img(idx).height()/ysize);
+      unsigned char* pixels = (unsigned char*)malloc(xsize*ysize*4);
+      rbuf.attach(pixels, xsize, ysize, -xsize*4);
+      pixfmt_type pfb(rbuf);
+      agg::renderer_base<pixfmt_type> img(pfb);
+
+      typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
+      interpolator_type interpolator(shape_mtx);
+      typedef agg::image_accessor_clone<pixfmt_type> img_accessor_type;
+      pixfmt_type pixf_img(rbuf_img(idx));
+      img_accessor_type ia(pixf_img);
+      typedef agg::span_image_filter_rgba_nn<img_accessor_type, interpolator_type> span_gen_type;
+      span_gen_type sg(ia, interpolator);
+      agg::span_allocator<color_type> sa;
+      ras.move_to_d(0,0);
+      ras.line_to_d(xsize,0);
+      ras.line_to_d(xsize,ysize);
+      ras.line_to_d(0,ysize);
+
+      agg::render_scanlines_aa(ras, sl, img, sa, sg);
+      rbuf_img(idx).attach(pixels, xsize, ysize, -xsize*4);
+   }
+
+
    virtual void on_ctrl_change()
    {
       view->on_ctrl_change();

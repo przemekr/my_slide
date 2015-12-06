@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.traffar.best_wishes"
+      package="com.traffar.my_slide"
 
-      android:versionCode="5"
-      android:versionName="0.5"
+      android:versionCode="1"
+      android:versionName="0.1"
       android:installLocation="auto">
       <tool-api-level>12</tool-api-level>
 
@@ -31,6 +31,6 @@
     <uses-feature android:glEsVersion="0x00020000" /> 
 
     <!-- Allow writing to external storage -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> 
 
 </manifest> 

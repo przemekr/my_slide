@@ -763,7 +763,7 @@ if(m_ctrls.on_mouse_button_down(m_specific->m_cur_x,
     FILE* platform_support::open_rw_file(const char* org,
           const char* app, const char* fname)
     {
-       ERROR_PRINT("open_rw");
+       DEBUG_PRINT("open_rw %s, %s, %s", org, app, fname);
 #ifdef __ANDROID__
        SDL_RWops* ops = SDL_RWFromFile(fname, "r+");
        if (ops)

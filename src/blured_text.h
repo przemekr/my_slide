@@ -56,11 +56,11 @@ public:
 
       const std::string texts[] =
       {
-         "Hi...",
-         "would be\n\n so nice",
-         "to write\n\n a good SW",
-         "without bugs...",
-         "just\n\n the clean code"
+         "Welcome\n\nMy Slide",
+         "Sample Text",
+         "Maybe Tags from\n\n Photos",
+         "Or the photo dates",
+         "Need an idea"
       };
       const std::string text = texts[idx];
       double alpha = std::max(0.0, 0.8-(time/3000));
@@ -74,7 +74,7 @@ public:
       double x = 50 +0.3*blur/3.0;
       double size = 1.0*w/15+time/duration*20;
       
-      agg::rgba blue(0.0, 0, 0.9, alpha);
+      agg::rgba blue(0.9, 0.9, 0.9, alpha);
       app.draw_text(x, y, size, blue, 1.0, text.c_str());
 
       pixf2.attach(pf, 0, y-50, w, y+350);

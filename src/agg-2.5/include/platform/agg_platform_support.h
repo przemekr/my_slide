@@ -70,15 +70,11 @@
 #include "agg_trans_viewport.h"
 #include "ctrl/agg_ctrl.h"
 
-#if DEBUG
 #if __ANDROID__
 #include <android/log.h>
 #define DEBUG_PRINT(...) do{ __android_log_print(ANDROID_LOG_INFO, __FILE__, __VA_ARGS__ ); } while (false)
 #else
 #define DEBUG_PRINT(...) do{fprintf(stderr, __VA_ARGS__ ); } while (false)
-#endif
-#else
-#define DEBUG_PRINT(...) do{ } while ( false )
 #endif
 
 #if __ANDROID__

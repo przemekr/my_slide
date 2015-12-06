@@ -7,7 +7,7 @@ LOCAL_MODULE := main
 SDL_PATH := ../SDL
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/agg-2.5/include 
-LOCAL_CPPFLAGS += -DMOBILE -DDEBUG
+LOCAL_CPPFLAGS += -DMOBILE -DDEBUG -std=c++11
 LOCAL_CXXFLAGS += -fexceptions
 
 # Add your application source files here...
