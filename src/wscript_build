@@ -10,7 +10,7 @@ bld.program(
       source   = ['agg_app.cc', 'agg_button_ctrl.cpp']
                   + bld.env.PLATFORM_SRC,
       includes = '. .. agg-2.5/include',
-      cxxflags = ['-O0', '-ggdb'],
+      cxxflags = ['-O0', '-ggdb', '-std=c++11'],
       lib      = ['SDL2_image', 'SDL2_mixer'],
       target   = 'my_slide',
       use      = ['agg'],

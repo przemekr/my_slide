@@ -56,12 +56,12 @@
 #include <time.h>
 
 #ifdef MOBILE
-#define START_H  1024
-#define START_W  760
+#define START_H  800
+#define START_W  600
 #define WINDOW_FLAGS agg::window_fullscreen | agg::window_keep_aspect_ratio
 #else
 #define START_H  800
-#define START_W  550
+#define START_W  600
 #define WINDOW_FLAGS agg::window_resize | agg::window_hw_buffer
 #endif
 
@@ -161,19 +161,60 @@ public:
       agg::render_scanlines(m_ras, m_sl, ren);
    }
 
-   bool scale_img(unsigned idx,
+   void rotate_img(unsigned idx, double ang)
+   {
+      agg::rendering_buffer rbuf;
+      agg::scanline_u8 sl;
+      agg::rasterizer_scanline_aa<> ras;
+      double w = rbuf_img(idx).width();
+      double h = rbuf_img(idx).height();
+
+      agg::trans_affine shape_mtx;
+      shape_mtx.reset();
+      shape_mtx *= agg::trans_affine_translation(-1*w/2, -1*h/2);
+      shape_mtx *= agg::trans_affine_rotation(ang);
+      shape_mtx *= agg::trans_affine_translation(h/2, w/2);
+      shape_mtx.invert();
+      std::cout << "h:" << h << " w:" << w << " -1w/2:" << -1*w/2 <<std::endl;
+
+      unsigned char* pixels = (unsigned char*)malloc(w*h*4);
+      rbuf.attach(pixels, h, w, -h*4);
+      pixfmt_type pfb(rbuf);
+      agg::renderer_base<pixfmt_type> img(pfb);
+
+      typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
+      interpolator_type interpolator(shape_mtx);
+      typedef agg::image_accessor_clone<pixfmt_type> img_accessor_type;
+      pixfmt_type pixf_img(rbuf_img(idx));
+      img_accessor_type ia(pixf_img);
+      typedef agg::span_image_filter_rgba_nn<img_accessor_type, interpolator_type> span_gen_type;
+      span_gen_type sg(ia, interpolator);
+      agg::span_allocator<color_type> sa;
+      ras.move_to_d(0,0);
+      ras.line_to_d(h,0);
+      ras.line_to_d(h,w);
+      ras.line_to_d(0,w);
+
+      agg::render_scanlines_aa(ras, sl, img, sa, sg);
+      rbuf_img(idx).attach(pixels, h, w, -h*4);
+   }
+
+   void scale_img(unsigned idx,
          unsigned xsize, unsigned ysize,
          unsigned xoff = 0,  unsigned yoff = 0)
    {
       agg::rendering_buffer rbuf;
       agg::scanline_u8 sl;
       agg::rasterizer_scanline_aa<> ras;
+      double w = rbuf_img(idx).width();
+      double h = rbuf_img(idx).height();
+      double nw = xsize;
+      double nh = ysize;
 
       agg::trans_affine shape_mtx;
       shape_mtx.reset();
-      shape_mtx *= agg::trans_affine_scaling(
-            rbuf_img(idx).width()/xsize,
-            rbuf_img(idx).height()/ysize);
+      shape_mtx *= agg::trans_affine_scaling(w/nw, h/nh);
+
       unsigned char* pixels = (unsigned char*)malloc(xsize*ysize*4);
       rbuf.attach(pixels, xsize, ysize, -xsize*4);
       pixfmt_type pfb(rbuf);

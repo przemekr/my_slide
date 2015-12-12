@@ -1,57 +1,81 @@
 #include "ctrl/agg_cbox_ctrl.h"
 #include "ctrl/agg_rbox_ctrl.h"
+#include "ctrl/agg_slider_ctrl.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+enum Unit {
+   HOURS = 0,
+   DAYS,
+   WEEKS,
+   MONTHS
+};
 
 struct Settings
 {
-   int theme;
+   int latest;
+   Unit unit;
    int sound;
-   Settings(): theme(0), sound(0) {}
+   Settings(): latest(0), sound(0) {}
+   time_t unit_in_sec()
+   {
+      switch (unit)
+      {
+         case HOURS:
+            return 60*60;
+         case DAYS:
+            return 24*60*60;
+         case WEEKS:
+            return 7*24*60*60;
+         case MONTHS:
+            return 30*24*60*60;
+      }
+   }
 };
 
-class MenuView : public View
+class MenuView : public AppView
 {
 public:
-   MenuView(App& application): app(application),
-   exitApp (30, 20, 130, 40,    "Quit App",  !flip_y),
-   exitMenu(30, 50, 130, 70,    "Return  ",  !flip_y),
-   sound   (150, 20,            "Sound  ",   !flip_y),
-
-   alarmSound (150, 400, 250,  460,  !flip_y),
-   theme      (150, 480, 250,  540,  !flip_y)
+   MenuView(App& app): AppView(app),
+   exitApp(30,  20,  130, 40,  "Quit App",  !flip_y),
+   start  (30,  50,  130, 70,  "Start  ",   !flip_y),
+   sound  (30,  80,            "Sound  ",   !flip_y),
+   rando  (30,  110,           "Random ",   !flip_y),
+   latest (200, 60,  370, 75,   !flip_y),
+   unit   (380, 20,  500, 120,  !flip_y)
    {
-      exitMenu.background_color(red);
+      start.background_color(red);
+      start.status(false);
       exitApp.background_color(red);
       sound.text_size(15);
       sound.text_color(red);
       sound.text_thickness(CTRL_TEXT_THICKNESS);
       sound.active_color(red);
       sound.inactive_color(red);
-      alarmSound.background_color(transp);
-      alarmSound.text_size(10);
-      alarmSound.border_width(0);
-      theme.background_color(transp);
-      theme.text_size(10);
-      theme.border_width(0);
-      add_ctrl(exitMenu);
+
+      latest.range(1, 8);
+      latest.num_steps(8);
+      latest.value(1);
+      latest.label("\nLatest %1.0f");
+      latest.background_color(transp);
+      latest.text_color(agg::rgba(0.9,0.0,0,9));
+      latest.text_thickness(CTRL_TEXT_THICKNESS);
+      latest.border_width(0, 0);
+      unit.background_color(transp);
+      add_ctrl(start);
+      add_ctrl(latest);
       add_ctrl(exitApp);
       add_ctrl(sound);
-      add_ctrl(alarmSound);
-      add_ctrl(theme);
+      add_ctrl(rando);
+      add_ctrl(unit);
 
-      settingsf = app.open_rw_file("traffar.se", "agg_timer", "settings");
-      fread(&settings, sizeof(Settings), 1, settingsf);
-
-      alarmSound.add_item("....");
-      alarmSound.add_item("Gong");
-      alarmSound.add_item("Meloldy");
-      alarmSound.cur_item(settings.sound);
-
-      theme.add_item("plain");
-      theme.add_item("flower");
-      theme.cur_item(settings.theme);
-
-      empty_decor    = new Decorator(app);
-      romantic_decor = new RomanticDecorator(app);
+      unit.add_item("Hours");
+      unit.add_item("Days");
+      unit.add_item("Weeks");
+      unit.add_item("Months");
+      unit.cur_item(0);
       on_ctrl_change();
    }
 
@@ -70,41 +94,111 @@ public:
       ras.reset();
       rbase.clear(lgray);
 
-      agg::render_ctrl(ras, sl, rbase, exitMenu);
+      agg::rect_i rec(0, 0, w, h);
+      pixfmt_type pf2(app.rbuf_img(0));
+      rbase.blend_from(pf2, 
+            &rec,
+            0,
+            0,
+            128);
+
+      agg::render_ctrl(ras, sl, rbase, start);
       agg::render_ctrl(ras, sl, rbase, exitApp);
       agg::render_ctrl(ras, sl, rbase, sound);
-      agg::render_ctrl(ras, sl, rbase, alarmSound);
-      agg::render_ctrl(ras, sl, rbase, theme);
-
-      agg::rgba blue(0.0, 0, 0.9, 0.6);
-      app.draw_text(30, 420, 20, blue, 1.0, "Sound");
-      app.draw_text(30, 500, 20, blue, 1.0, "Theme");
+      agg::render_ctrl(ras, sl, rbase, rando);
+      agg::render_ctrl(ras, sl, rbase, unit);
+      agg::render_ctrl(ras, sl, rbase, latest);
    }
 
    void on_ctrl_change()
    {
+
+#ifdef MOBILE
+#define IDIRPATH "/storage/sdcard0/DCIM/Camera"
+#define MDIRPATH "/storage/sdcard0/Music"
+#else
+#define IDIRPATH "."
+#define MDIRPATH "."
+#endif
+
       app.sound_on(sound.status());
 
-      app.current_sound = alarmSound.cur_item();
-      decorator = theme.cur_item() == 1? romantic_decor:
-         theme.cur_item() == 0? empty_decor:
-         empty_decor;
-
-      if (exitMenu.status())
+      if (start.status())
       {
-         exitMenu.status(false);
-         app.changeView("timer");
+         DIR* Idir = opendir(IDIRPATH);
+         DIR* Mdir = opendir(MDIRPATH);
+         struct dirent *dirEntry;
+         int img = 1;
+         int music = 0;
+         const int imgMax = 15;
+         const int musicMax = 2;
+         std::vector<std::string> images;
+         std::vector<std::string> musics;
+         struct stat sb;
+         time_t latest = time(NULL) - settings.latest*settings.unit_in_sec();
+
+         while ((dirEntry = readdir(Idir)) != NULL)
+         {
+            if (img < imgMax && strstr(dirEntry->d_name, ".jpg") != NULL)
+            {
+               stat((std::string(MDIRPATH) + "/" + dirEntry->d_name).c_str(), &sb);
+               if (sb.st_mtime > latest)
+                  images.push_back(dirEntry->d_name);
+            }
+         }
+         while ((dirEntry = readdir(Mdir)) != NULL)
+         {
+            if (music < musicMax && (strstr(dirEntry->d_name, ".ogg") != NULL))
+            {
+               musics.push_back(dirEntry->d_name);
+            }
+         }
+         closedir(Idir);
+         closedir(Mdir);
+         std::random_shuffle (images.begin(), images.end());
+         std::random_shuffle (musics.begin(), musics.end());
+
+         //take latest 15 images.
+         for (auto it = images.rbegin(); it != images.rend() && img < 15; it++)
+         {
+            std::cout << "loading: " << *it << std::endl;
+            app.load_img(img, (std::string(IDIRPATH) + "/" + *it).c_str());
+            double h = app.rbuf_img(img).height();
+            double w = app.rbuf_img(img).width();
+            if (w>h)
+            {
+               app.rotate_img(img, agg::pi/2);
+            }
+            app.scale_img(img, app.rbuf_window().width(), app.rbuf_window().height());
+            img++;
+         }
+
+         //take latest 2 musics.
+         for (auto it = musics.rbegin(); it != musics.rend() && music < 2; it++)
+         {
+            app.load_music(music++, (std::string(MDIRPATH) + "/" + *it).c_str());
+         }
+         maxPhotoIdx = img;
+
+         if (music)
+            app.play_music(0, 50);
+
+         if (maxPhotoIdx < 3)
+         {
+            throw 0;
+         }
+
+         start.status(false);
+         app.changeView("TextView");
       }
+
       if (exitApp.status())
       {
          throw 0;
       }
 
-      settings.sound = alarmSound.cur_item();
-      settings.theme = theme.cur_item();
-      rewind(settingsf);
-      fwrite(&settings, sizeof(Settings), 1, settingsf);
-      fflush(settingsf);
+      settings.unit   = (Unit)unit.cur_item();
+      settings.latest = latest.value();
    }
 
    void on_mouse_button_up(int x, int y, unsigned flags)
@@ -136,16 +230,15 @@ public:
       }
    }
 
-private:
-    App& app;
-    agg::button_ctrl<agg::rgba8> exitMenu;
-    agg::button_ctrl<agg::rgba8> exitApp;
-    agg::cbox_ctrl<agg::rgba8>   sound;
+   const Settings& getSettings() { return settings; }
 
-    agg::rbox_ctrl<agg::rgba8> theme;
-    agg::rbox_ctrl<agg::rgba8> alarmSound;
-    Decorator* empty_decor;
-    Decorator* romantic_decor;
-    FILE* settingsf;
-    Settings settings;
+private:
+   agg::button_ctrl<agg::rgba8> start;
+   agg::button_ctrl<agg::rgba8> exitApp;
+   agg::cbox_ctrl<agg::rgba8>   sound;
+   agg::cbox_ctrl<agg::rgba8>   rando;
+   agg::slider_ctrl<agg::rgba8> latest;
+
+   agg::rbox_ctrl<agg::rgba8> unit;
+   Settings settings;
 };

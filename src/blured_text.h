@@ -57,10 +57,6 @@ public:
       const std::string texts[] =
       {
          "Welcome\n\nMy Slide",
-         "Sample Text",
-         "Maybe Tags from\n\n Photos",
-         "Or the photo dates",
-         "Need an idea"
       };
       const std::string text = texts[idx];
       double alpha = std::max(0.0, 0.8-(time/3000));
@@ -78,9 +74,7 @@ public:
       app.draw_text(x, y, size, blue, 1.0, text.c_str());
 
       pixf2.attach(pf, 0, y-50, w, y+350);
-      agg::stack_blur_rgba32(pixf2,
-            blur, 
-            blur);
+      //agg::stack_blur_rgba32(pixf2, blur, blur);
       blur += 0.3;
       if (time > 2000)
          blur += 1;
@@ -91,7 +85,7 @@ public:
       wait_mode(false);
       time = 0;
       blur = 0;
-      idx = std::rand()%5;
+      idx = std::rand()%1;
    }
 
    void on_resize(int, int)
