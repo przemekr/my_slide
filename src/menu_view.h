@@ -54,6 +54,11 @@ public:
       sound.text_thickness(CTRL_TEXT_THICKNESS);
       sound.active_color(red);
       sound.inactive_color(red);
+      rando.text_size(15);
+      rando.text_color(red);
+      rando.text_thickness(CTRL_TEXT_THICKNESS);
+      rando.active_color(red);
+      rando.inactive_color(red);
 
       latest.range(1, 8);
       latest.num_steps(8);
@@ -136,14 +141,22 @@ public:
          std::vector<std::string> musics;
          struct stat sb;
          time_t latest = time(NULL) - settings.latest*settings.unit_in_sec();
+         time_t mtime;
 
          while ((dirEntry = readdir(Idir)) != NULL)
          {
             if (img < imgMax && strstr(dirEntry->d_name, ".jpg") != NULL)
             {
-               stat((std::string(MDIRPATH) + "/" + dirEntry->d_name).c_str(), &sb);
-               if (sb.st_mtime > latest)
+               memset(&sb, '\0', sizeof(struct stat));
+               stat((std::string(IDIRPATH) + "/" + dirEntry->d_name).c_str(), &sb);
+               mtime = sb.st_mtime;
+               DEBUG_PRINT("file    %s", dirEntry->d_name);
+               DEBUG_PRINT("md tile %s", ctime(&mtime));
+               DEBUG_PRINT("latest  %s", ctime(&latest));
+               if (mtime > latest)
+               {
                   images.push_back(dirEntry->d_name);
+               }
             }
          }
          while ((dirEntry = readdir(Mdir)) != NULL)
@@ -161,7 +174,6 @@ public:
          //take latest 15 images.
          for (auto it = images.rbegin(); it != images.rend() && img < 15; it++)
          {
-            std::cout << "loading: " << *it << std::endl;
             app.load_img(img, (std::string(IDIRPATH) + "/" + *it).c_str());
             double h = app.rbuf_img(img).height();
             double w = app.rbuf_img(img).width();
