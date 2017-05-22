@@ -47,6 +47,7 @@ public:
 
    void on_draw()
    {
+      DEBUG_PRINT("text view on draw\n");
       pixfmt_type pf(app.rbuf_window());;
       agg::renderer_base<pixfmt_type> rbase(pf);
       agg::rasterizer_scanline_aa<> ras;
@@ -58,7 +59,9 @@ public:
       {
          "Welcome\n\nMy Slide",
       };
-      const std::string text = texts[idx];
+      //const std::string text = texts[idx];
+      const std::string text = images[idx].second;
+      
       double alpha = std::max(0.0, 0.8-(time/3000));
 
       agg::rendering_buffer m_rbuf2;
@@ -78,10 +81,14 @@ public:
       blur += 0.3;
       if (time > 2000)
          blur += 1;
+
+      DEBUG_PRINT("text view on draw done\n");
    }
 
    void enter()
    {
+      app.start_timer();
+      DEBUG_PRINT("text view enter\n");
       wait_mode(false);
       time = 0;
       blur = 0;

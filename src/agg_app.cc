@@ -32,6 +32,9 @@
 #include <iostream>
 
 int maxPhotoIdx = 0;
+int nextIdx = 0;
+bool allPhotosLoaded = false;
+std::vector<std::pair<std::string, std::string> >  images;
 
 #include "app_support.h"
 #include "photo_view.h"
@@ -53,6 +56,7 @@ public:
    }
    virtual void changeView(const char* name) 
    {
+      DEBUG_PRINT("changeView: %s", name);
       if (strcmp(name, "PhotoView") == 0)
          view = &photoView;
       if (strcmp(name, "TextView") == 0)

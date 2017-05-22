@@ -803,7 +803,8 @@ if(m_ctrls.on_mouse_button_down(m_specific->m_cur_x,
     {
         if(idx < max_images)
         {
-            if(m_specific->m_surf_img[idx]) SDL_FreeSurface(m_specific->m_surf_img[idx]);
+            if (m_specific->m_surf_img[idx]) SDL_FreeSurface(m_specific->m_surf_img[idx]);
+            m_specific->m_surf_img[idx] = NULL;
 
             char fn[1024];
             strcpy(fn, file);

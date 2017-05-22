@@ -74,7 +74,7 @@
 #include <android/log.h>
 #define DEBUG_PRINT(...) do{ __android_log_print(ANDROID_LOG_INFO, __FILE__, __VA_ARGS__ ); } while (false)
 #else
-#define DEBUG_PRINT(...) do{fprintf(stderr, __VA_ARGS__ ); } while (false)
+#define DEBUG_PRINT(...) do{ printf(__VA_ARGS__ ); } while (false)
 #endif
 
 #if __ANDROID__
@@ -432,7 +432,7 @@ namespace agg
     class platform_support
     {
     public:
-        enum max_images_e { max_images = 16 };
+        enum max_images_e { max_images = 128 };
 
         // format - see enum pix_format_e {};
         // flip_y - true if you want to have the Y-axis flipped vertically.

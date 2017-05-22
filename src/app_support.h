@@ -175,7 +175,6 @@ public:
       shape_mtx *= agg::trans_affine_rotation(ang);
       shape_mtx *= agg::trans_affine_translation(h/2, w/2);
       shape_mtx.invert();
-      std::cout << "h:" << h << " w:" << w << " -1w/2:" << -1*w/2 <<std::endl;
 
       unsigned char* pixels = (unsigned char*)malloc(w*h*4);
       rbuf.attach(pixels, h, w, -h*4);
@@ -197,6 +196,7 @@ public:
 
       agg::render_scanlines_aa(ras, sl, img, sa, sg);
       rbuf_img(idx).attach(pixels, h, w, -h*4);
+      load_img(idx, "");
    }
 
    void scale_img(unsigned idx,
@@ -216,6 +216,7 @@ public:
       shape_mtx *= agg::trans_affine_scaling(w/nw, h/nh);
 
       unsigned char* pixels = (unsigned char*)malloc(xsize*ysize*4);
+      DEBUG_PRINT("malloc: %d\n", xsize*ysize*4);
       rbuf.attach(pixels, xsize, ysize, -xsize*4);
       pixfmt_type pfb(rbuf);
       agg::renderer_base<pixfmt_type> img(pfb);
@@ -234,6 +235,7 @@ public:
       ras.line_to_d(0,ysize);
 
       agg::render_scanlines_aa(ras, sl, img, sa, sg);
+      free(rbuf_img(idx).buf());
       rbuf_img(idx).attach(pixels, xsize, ysize, -xsize*4);
    }
 

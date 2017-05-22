@@ -97,8 +97,12 @@ public:
       extern int maxPhotoIdx;
       wait_mode(false);
       currIdx = nextIdx;
-      while (currIdx == nextIdx)
-         nextIdx = rand()%maxPhotoIdx + 1;
+      if (nextIdx < maxPhotoIdx)
+         nextIdx++;
+      if (nextIdx == maxPhotoIdx && allPhotosLoaded)
+         nextIdx = 0;
+      DEBUG_PRINT("photo view enter\n");
+
       scale =  1+(double)(rand()%100)/10000;
       dim = 0;
       switch (rand()%4)
@@ -140,7 +144,6 @@ private:
    }
    bool resized;
    int currIdx;
-   int nextIdx;
    double moveX;
    double moveY;
    double scale;

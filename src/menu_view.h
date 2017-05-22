@@ -6,6 +6,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <pthread.h>
+#include "SDL_thread.h"
+
+
 enum Unit {
    HOURS = 0,
    DAYS,
@@ -137,8 +141,6 @@ public:
          int music = 0;
          const int imgMax = 15;
          const int musicMax = 2;
-         std::vector<std::string> images;
-         std::vector<std::string> musics;
          struct stat sb;
          time_t latest = time(NULL) - settings.latest*settings.unit_in_sec();
          time_t mtime;
@@ -150,12 +152,9 @@ public:
                memset(&sb, '\0', sizeof(struct stat));
                stat((std::string(IDIRPATH) + "/" + dirEntry->d_name).c_str(), &sb);
                mtime = sb.st_mtime;
-               DEBUG_PRINT("file    %s", dirEntry->d_name);
-               DEBUG_PRINT("md tile %s", ctime(&mtime));
-               DEBUG_PRINT("latest  %s", ctime(&latest));
                if (mtime > latest)
                {
-                  images.push_back(dirEntry->d_name);
+                  images.push_back(std::pair<std::string, std::string>(dirEntry->d_name, ctime(&mtime)));
                }
             }
          }
@@ -168,37 +167,25 @@ public:
          }
          closedir(Idir);
          closedir(Mdir);
-         std::random_shuffle (images.begin(), images.end());
-         std::random_shuffle (musics.begin(), musics.end());
 
-         //take latest 15 images.
-         for (auto it = images.rbegin(); it != images.rend() && img < 15; it++)
+         if (rando.status())
          {
-            app.load_img(img, (std::string(IDIRPATH) + "/" + *it).c_str());
-            double h = app.rbuf_img(img).height();
-            double w = app.rbuf_img(img).width();
-            if (w>h)
-            {
-               app.rotate_img(img, agg::pi/2);
-            }
-            app.scale_img(img, app.rbuf_window().width(), app.rbuf_window().height());
-            img++;
+            std::random_shuffle(images.begin(), images.end());
+            std::random_shuffle(musics.begin(), musics.end());
          }
 
          //take latest 2 musics.
-         for (auto it = musics.rbegin(); it != musics.rend() && music < 2; it++)
-         {
-            app.load_music(music++, (std::string(MDIRPATH) + "/" + *it).c_str());
-         }
-         maxPhotoIdx = img;
-
+         if (sound.status())
+            for (auto it = musics.rbegin(); it != musics.rend() && music < 2; it++)
+            {
+               app.load_music(music++, (std::string(MDIRPATH) + "/" + *it).c_str());
+            }
          if (music)
             app.play_music(0, 50);
 
-         if (maxPhotoIdx < 3)
-         {
-            throw 0;
-         }
+         //lunch the image loader thread. Wait until it loads 3 photos
+         SDL_Thread *thread;
+         thread = SDL_CreateThread(image_loader, "ImageLoader", this);
 
          start.status(false);
          app.changeView("TextView");
@@ -242,6 +229,33 @@ public:
       }
    }
 
+   static int image_loader(void* menu)
+   {
+      SDL_SetThreadPriority(SDL_THREAD_PRIORITY_LOW);
+
+      class MenuView* m = (MenuView*)menu;
+      int img = 1;
+      for (auto it = images.begin(); it != images.end() && maxPhotoIdx < m->app.max_images; it++)
+      {
+         m->app.load_img(img, (std::string(IDIRPATH) + "/" + it->first).c_str());
+         double h = m->app.rbuf_img(img).height();
+         double w = m->app.rbuf_img(img).width();
+         DEBUG_PRINT("photo loaded! %d, %s\n", maxPhotoIdx, it->first.c_str());
+         if (w>h)
+         {
+            m->app.rotate_img(img, agg::pi/2);
+            DEBUG_PRINT("photo rotated! %d\n", maxPhotoIdx);
+         }
+         m->app.scale_img(img, m->app.rbuf_window().width(), m->app.rbuf_window().height());
+         img++;
+         maxPhotoIdx = img;
+         DEBUG_PRINT("photo scaled! %d\n", maxPhotoIdx);
+      }
+      DEBUG_PRINT("all loaded\n");
+      allPhotosLoaded = true;
+      return 0;
+   }
+
    const Settings& getSettings() { return settings; }
 
 private:
@@ -252,5 +266,7 @@ private:
    agg::slider_ctrl<agg::rgba8> latest;
 
    agg::rbox_ctrl<agg::rgba8> unit;
+
+   std::vector<std::string> musics;
    Settings settings;
 };
